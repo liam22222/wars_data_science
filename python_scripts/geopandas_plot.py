@@ -12,7 +12,7 @@ def plot_world(df, column, cmapR="rainbow"):
     df_new = df.rename(columns={'country': 'name'}, copy=True)
     combined = world.merge(df_new,on="name")
     graph = combined.plot(column=column ,legend=True, cmap=cmapR,
-     legend_kwds={"label" : "Battles by country", "orientation" : "horizontal"})
+     legend_kwds={"label" : "Coast length (Kilometers)", "orientation" : "horizontal"})
     graph.set_facecolor('#00699460')
     plt.show()
 

@@ -9,6 +9,8 @@ from numpy.core.fromnumeric import mean, shape
 from pandas.io.parsers import read_csv
 from scipy.sparse.construct import rand
 from sklearn.utils import shuffle
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import random
@@ -585,7 +587,21 @@ def logistic_regression(df, feature_cols):
     print("Recall:",metrics.recall_score(y_test, y_pred))
     print(valid_invalid_matrix)
     
+    logit_roc_auc = roc_auc_score(y_test, logreg.predict(X_test))
+    fpr, tpr, thresholds = roc_curve(y_test, logreg.predict_proba(X_test)[:,1])
+    plt.figure()
+    ax = plt.gca()
+    ax.set_facecolor('xkcd:sky blue')
+    plt.plot(fpr, tpr, label='Logistic Regression (area = %0.2f)' % logit_roc_auc)
+    plt.plot([0, 1], [0, 1],'r--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver operating characteristic')
+    plt.legend(loc="lower right")
     plt.show()
+
 
 #code: 
 #createDatabases() # part 1.a
@@ -620,11 +636,11 @@ df = pd.read_csv("DataFrames.csv")
 
 #df["sum_of_army"] = df.apply(lambda row: float(row.strength_A) + float(row.strength_B), axis = 1)
 #plot_world_special_treatment(df[["losser_list", "sum_of_army"]], "losser_list", "sum_of_army")
-
+# plot_world(country_df,"coast_length","cividis")
 #plot_world_special_treatment(df[["location", "sum_of_deaths"]], "location", "sum_of_deaths")
 #df.to_csv('DataFrame.csv')
 #plt.show()
 #X_total = build_X_total(country_df)
-X_total = pd.read_csv("ML-data/X_total.csv")
-X_total = clean_X(X_total)
-logistic_regression(X_total,["coast_length","border_length","sea_level","number_of_borders","avg_temp", "location_coast_length","location_border_length","location_sea_level","location_number_of_borders","location_avg_temp"])
+# X_total = pd.read_csv("ML-data/X_total.csv")
+# X_total = clean_X(X_total)
+# logistic_regression(X_total,["coast_length","border_length","sea_level","number_of_borders","avg_temp", "location_coast_length","location_border_length","location_sea_level","location_number_of_borders","location_avg_temp"])
