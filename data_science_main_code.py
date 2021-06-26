@@ -36,7 +36,7 @@ from python_scripts.connect_db import combine_csv
 from python_scripts.export_from_battle import get_all_battles_from_page, get_all_battles_from_special_page
 from python_scripts.geopandas_plot import plot_world_special_treatment, plot_world_sum, plot_world_video,plot_world, world
 from python_scripts.seaborn import MultiGraph
-
+from python_scripts.deep_learning import deep_learning
 
 #This is the main code for my dataScince project.
 months = ['January', 'Febuary', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -676,6 +676,8 @@ df = pd.read_csv("DataFrames.csv")
 #X_total = build_X_total(country_df)
 X_total = pd.read_csv("ML-data/X_total.csv")
 #print(df.terror.value_counts())
-create_video(df, country_df,"battles_in_country",1918,2018)
-#X_total = clean_X(X_total)
+#create_video(df, country_df,"battles_in_country",1918,2018)
+fet_cols = ["coast_length","border_length","sea_level","number_of_borders","avg_temp", "location_coast_length","location_border_length","location_sea_level","location_number_of_borders","location_avg_temp"]
+X_total = clean_X(X_total)
+deep_learning(X_total,fet_cols,12)
 #logistic_regression(X_total,["coast_length","border_length","sea_level","number_of_borders","avg_temp", "location_coast_length","location_border_length","location_sea_level","location_number_of_borders","location_avg_temp"])
