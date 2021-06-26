@@ -8,6 +8,17 @@ import matplotlib.pyplot as plt
 world = geopandas.read_file(geopandas.datasets.get_path('naturalearth_lowres'))
 world = world[(world.pop_est>0) & (world.name!="Antarctica")]
 
+def plot_world_video(df, column, year, cmapR="rainbow"):
+    df_new = df.rename(columns={'country': 'name'}, copy=True)
+    combined = world.merge(df_new,on="name")
+    combined.append(pd.Series(), ignore_index=True)
+    graph = combined.plot(column=column , legend=True, cmap=cmapR,
+    legend_kwds={"label" : "{0} Death".format(year), "orientation" : "horizontal"})
+    graph.set_facecolor('#00699460')
+    plt.savefig('videos/{0}.png'.format(year))
+    
+    
+
 def plot_world(df, column, cmapR="rainbow"):
     df_new = df.rename(columns={'country': 'name'}, copy=True)
     combined = world.merge(df_new,on="name")

@@ -13,6 +13,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+
 import random
 from threading import Thread
 from numpy import NaN, empty, nan, number
@@ -26,12 +27,14 @@ import seaborn as sns
 import numpy as np
 from sklearn import preprocessing
 
+
+
 from pandas.core.dtypes.missing import notnull
 from pandas.io.pytables import incompatibility_doc
 from python_scripts.getDatabase_part_1 import get_database_from_url, runCommand
 from python_scripts.connect_db import combine_csv
 from python_scripts.export_from_battle import get_all_battles_from_page, get_all_battles_from_special_page
-from python_scripts.geopandas_plot import plot_world_special_treatment, plot_world_sum, plot_world, world
+from python_scripts.geopandas_plot import plot_world_special_treatment, plot_world_sum, plot_world_video,plot_world, world
 from python_scripts.seaborn import MultiGraph
 
 
@@ -581,7 +584,6 @@ def logistic_regression(df, feature_cols):
     plt.ylabel('Actual label')
     plt.xlabel('Predicted label')
 
-    
     print("Accuracy:",metrics.accuracy_score(y_test, y_pred))
     print("Precision:",metrics.precision_score(y_test, y_pred))
     print("Recall:",metrics.recall_score(y_test, y_pred))
@@ -600,8 +602,38 @@ def logistic_regression(df, feature_cols):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver operating characteristic')
     plt.legend(loc="lower right")
+
+
     plt.show()
 
+#stage 5.a Wow effect:
+def create_video(df, country_df, column, year_begin, year_end):
+    max_wars = 0
+    year_wars_count = [] 
+    for year in range(year_begin,year_end + 1):
+        wars_count = []
+        new_df = df[(df["finish_year"] - year >= 0)]
+        new_df = new_df[new_df["start_year"] - year <= 0]
+        wars = new_df.index.tolist()
+        for idx, country in enumerate(country_df["country"]):
+            wars_in_country = (str(country_df.iloc[idx]["winning_wars"]).split(",")[:-1])
+            wars_in_country.extend((str(country_df.iloc[idx]["lost_wars"]).split(",")[:-1]))
+            sum_casualties = 0
+            wars_count.append(sum([df.iloc[war]["casualties_A"] + df.iloc[war]["casualties_B"] for war in wars if str(war) in wars_in_country]))
+        year_wars_count.append(wars_count)
+    
+    for year_wars in year_wars_count:
+        this_year = max(year_wars)
+        if max_wars < this_year:
+            max_wars = this_year
+    
+    index = country_df[country_df["country"]== "Fiji"].index[0]
+    for idx, year_wars in enumerate(year_wars_count):
+        country_df["wars_per_year"] = year_wars
+        #country_df.at[index,"wars_per_year"] = max_wars
+        plot_world_video(country_df,"wars_per_year", year_begin + idx, "Reds")
+                    
+        
 
 #code: 
 #createDatabases() # part 1.a
@@ -609,6 +641,7 @@ def logistic_regression(df, feature_cols):
 #country_df = create_countries_dataframe() # part 1.c
 country_df = pd.read_csv("country_df.csv")
 df = pd.read_csv("DataFrames.csv")
+
 #clean_country(country_df)
 #country_df.sort_values(by="coast_length") 
 #country_df = country_df.drop_duplicates(subset="country")
@@ -641,6 +674,8 @@ df = pd.read_csv("DataFrames.csv")
 #df.to_csv('DataFrame.csv')
 #plt.show()
 #X_total = build_X_total(country_df)
-# X_total = pd.read_csv("ML-data/X_total.csv")
-# X_total = clean_X(X_total)
-# logistic_regression(X_total,["coast_length","border_length","sea_level","number_of_borders","avg_temp", "location_coast_length","location_border_length","location_sea_level","location_number_of_borders","location_avg_temp"])
+X_total = pd.read_csv("ML-data/X_total.csv")
+#print(df.terror.value_counts())
+create_video(df, country_df,"battles_in_country",1918,2018)
+#X_total = clean_X(X_total)
+#logistic_regression(X_total,["coast_length","border_length","sea_level","number_of_borders","avg_temp", "location_coast_length","location_border_length","location_sea_level","location_number_of_borders","location_avg_temp"])
