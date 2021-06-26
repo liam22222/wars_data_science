@@ -13,10 +13,10 @@ def plot_world_video(df, column, year, cmapR="rainbow"):
     combined = world.merge(df_new,on="name")
     combined.append(pd.Series(), ignore_index=True)
     graph = combined.plot(column=column , legend=True, cmap=cmapR,
-    legend_kwds={"label" : "{0} Death".format(year), "orientation" : "horizontal"})
+    legend_kwds={"label" : "{0} Number of wars".format(year), "orientation" : "horizontal"})
     graph.set_facecolor('#00699460')
-    plt.savefig('videos/{0}.png'.format(year))
-    
+    plt.savefig('videos/history/{0}.png'.format(year))
+    #plt.show()
     
 
 def plot_world(df, column, cmapR="rainbow"):

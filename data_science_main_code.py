@@ -22,6 +22,7 @@ import difflib
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import LabelEncoder  
 from sklearn import metrics
 import seaborn as sns
 import numpy as np
@@ -606,6 +607,7 @@ def logistic_regression(df, feature_cols):
 
     plt.show()
 
+
 #stage 5.a Wow effect:
 def create_video(df, country_df, column, year_begin, year_end):
     max_wars = 0
@@ -616,10 +618,9 @@ def create_video(df, country_df, column, year_begin, year_end):
         new_df = new_df[new_df["start_year"] - year <= 0]
         wars = new_df.index.tolist()
         for idx, country in enumerate(country_df["country"]):
-            wars_in_country = (str(country_df.iloc[idx]["winning_wars"]).split(",")[:-1])
-            wars_in_country.extend((str(country_df.iloc[idx]["lost_wars"]).split(",")[:-1]))
-            sum_casualties = 0
-            wars_count.append(sum([df.iloc[war]["casualties_A"] + df.iloc[war]["casualties_B"] for war in wars if str(war) in wars_in_country]))
+            wars_in_country = (str(country_df.iloc[idx]["wars_in_country"]).split(",")[:-1])
+            #wars_in_country.extend((str(country_df.iloc[idx]["lost_wars"]).split(",")[:-1]))
+            wars_count.append(len([war for war in wars if str(war) in wars_in_country]))
         year_wars_count.append(wars_count)
     
     for year_wars in year_wars_count:
@@ -676,8 +677,10 @@ df = pd.read_csv("DataFrames.csv")
 #X_total = build_X_total(country_df)
 X_total = pd.read_csv("ML-data/X_total.csv")
 #print(df.terror.value_counts())
-#create_video(df, country_df,"battles_in_country",1918,2018)
 fet_cols = ["coast_length","border_length","sea_level","number_of_borders","avg_temp", "location_coast_length","location_border_length","location_sea_level","location_number_of_borders","location_avg_temp"]
 X_total = clean_X(X_total)
-deep_learning(X_total,fet_cols,12)
-#logistic_regression(X_total,["coast_length","border_length","sea_level","number_of_borders","avg_temp", "location_coast_length","location_border_length","location_sea_level","location_number_of_borders","location_avg_temp"])
+
+print(country_df.info())
+#deep_learning(X_total,fet_cols,12)
+#logistic_regression(X_total,fet_cols)
+
