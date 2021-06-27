@@ -1,5 +1,5 @@
 from logging import error
-from math import log
+from math import comb, log
 from re import X
 import warnings
 import ast
@@ -242,8 +242,8 @@ def special_treatment_for_years(df):
     bc = df['start_year'].str.contains('BC')
     df.loc[bc,'start_year'] = '-'+df.loc[bc,'start_year']
 
-    bc = df['finish_year'].str.contains('BC')
-    df.loc[bc,'finish_year'] = '-'+df.loc[bc,'finish_year']
+    bc = df['finish_year'].str.contains('BC', na=False)
+    df.loc[bc, 'finish_year'] = '-'+df.loc[bc,'finish_year']
 
     val = df['start_year'].str.extract('(-?[0-9]+)').fillna('2021')
     df['start_year'] = df['start_year'].str.extract('(\d{4})').fillna(val)
@@ -252,6 +252,7 @@ def special_treatment_for_years(df):
     val = df['finish_year'].str.extract('(-?[0-9]+)').fillna('2021')
     df['finish_year'] = df['finish_year'].str.extract('(\d{4})').fillna(val)
     df['finish_year'] = df['finish_year'].apply(lambda x: extract_year(x))
+
     
 #Stage 2.c - Add new columns to the dataframe:
 #
@@ -422,11 +423,34 @@ def scatter_values_two_dim(df, xais="", yais="", cmap="coral"):
     df.plot.scatter(x=xais, y=yais,c=cmap)
     plt.show()
 
+#stage 4.subA - Build X dataframe
+def build_x():
+    df = pd.read_csv("Databases/combine_files.csv")
+
+    #Cleaning location
+    df['location'] = df['location'].astype(str).str.strip('[]').str.replace("'",'').str.replace('[','').str.replace(']','').str.replace('\d+', '')
+    df['winner_list'] = df['winner_list'].astype(str).str.strip('[]').str.replace("'",'').str.replace('[','').str.replace(']','').str.replace('\d+', '')
+    df['losser_list'] = df['losser_list'].astype(str).str.strip('[]').str.replace("'",'').str.replace('[','').str.replace(']','').str.replace('\d+', '')
+
+    df.drop(df[(df.location.isnull()) & (df.winner_list.isnull()) & (df.losser_list.isnull())].index, inplace=True)
+
+    #Replacing all empty location to combonation of winner and lossers
+    df.location = df.location.fillna(df.winner_list.str.cat(df.losser_list, sep=',')) #In case winner_list and losser_list is'nt NaN
+    df.location = df.location.fillna(df.winner_list) #In case losser_list empty
+    df.location = df.location.fillna(df.losser_list) #In case winner_list empty
+    
+    values = {'winner_list': 'non-state',
+    'losser_list': 'non-state'}
+    df = df.fillna(value=values)
+
+    special_treatment_for_years(df)
+    df.to_csv("ML-data/X.csv")
 
 #stage 4.a Building X dataset:
-def build_X_total(country_df):
+def build_X_total(country_df,temp):
     #X is the combained files from before without any drops
-    X = pd.read_csv("ML-data/X.csv")
+    #X = pd.read_csv("ML-data/X.csv")
+    X = temp
     X['location'] = X.location.str.rstrip(',').str.split(',')
     X = X.explode('location')
     world_countries = world.name.tolist()
@@ -446,16 +470,41 @@ def build_X_total(country_df):
     location_avg_temp = []
 
     label = [] # Won or lost (0/1 Lost/Won)
+
+    #Arrays for my second quetsion
+    start_year = []
+    finish_year = []
+    wars_victory = []
+    wars_loses = []
+    total_wars_participate = []
+    wars_inside_country = [] 
+    imperialism_wars = [] 
+    deimperialism_wars = []
+    battles_in_country = []
     
     for idx, state in enumerate(country_df["country"]):
         for idx_X, winners in enumerate(X["winner_list"]):
             if state in winners:
+                #Question number one : Does geographical charectarstics have an impat?
                 country_name.append(state)
                 coast_length.append(country_df.iloc[idx]["coast_length"])
                 border_length.append(country_df.iloc[idx]["border_length"])
                 sea_level.append(country_df.iloc[idx]["sea_level"])
                 number_of_borders.append(country_df.iloc[idx]["number_of_borders"])
                 avg_temp.append(country_df.iloc[idx]["temp"])
+
+                #Question number two? Can history teach us about wars?
+                start_year.append(X.iloc[idx_X]["start_year"])
+                finish_year.append(X.iloc[idx_X]["start_year"])
+                wars_victory.append(country_df.iloc[idx]["wars_victory"])
+                wars_loses.append(country_df.iloc[idx]["wars_loses"])
+                total_wars_participate.append(country_df.iloc[idx]["total_wars_participate"])
+                wars_inside_country.append(country_df.iloc[idx]["wars_inside_country"])
+                imperialism_wars.append(country_df.iloc[idx]["imperialism_wars"])
+                deimperialism_wars.append(country_df.iloc[idx]["deimperialism_wars"])
+                battles_in_country.append(country_df.iloc[idx]["battles_in_country"])
+
+                #War won
                 label.append(1)
 
                 #Add winners location details
@@ -488,12 +537,26 @@ def build_X_total(country_df):
 
         for idx_Xl, lossers in enumerate(X["losser_list"]):
             if state in lossers:
+
+                #Question number one: does geographical charectarstics has an impact of winning?
                 country_name.append(state)
                 coast_length.append(country_df.iloc[idx]["coast_length"])
                 border_length.append(country_df.iloc[idx]["border_length"])
                 sea_level.append(country_df.iloc[idx]["sea_level"])
                 number_of_borders.append(country_df.iloc[idx]["number_of_borders"])
                 avg_temp.append(country_df.iloc[idx]["temp"])
+                
+                #Question number two: can history teach us?
+                start_year.append(X.iloc[idx_X]["start_year"])
+                finish_year.append(X.iloc[idx_X]["start_year"])
+                wars_victory.append(country_df.iloc[idx]["wars_victory"])
+                wars_loses.append(country_df.iloc[idx]["wars_loses"])
+                total_wars_participate.append(country_df.iloc[idx]["total_wars_participate"])
+                wars_inside_country.append(country_df.iloc[idx]["wars_inside_country"])
+                imperialism_wars.append(country_df.iloc[idx]["imperialism_wars"])
+                deimperialism_wars.append(country_df.iloc[idx]["deimperialism_wars"])
+                battles_in_country.append(country_df.iloc[idx]["battles_in_country"])
+                #War lose
                 label.append(0)
 
                 #Add losser location details
@@ -528,13 +591,16 @@ def build_X_total(country_df):
     "number_of_borders" : number_of_borders, "avg_temp" : avg_temp,
     "location_coast_length" : location_coast_length, "location_border_length" : location_border_length,
     "location_sea_level" : location_sea_level, "location_number_of_borders" : location_number_of_borders,
-    "location_avg_temp":location_avg_temp, "label" : label}
+    "location_avg_temp":location_avg_temp, "start_year" : start_year, "finish_year" : finish_year,
+    "wars_victory":wars_victory,"wars_loses":wars_loses,"total_wars_participate":total_wars_participate,
+    "wars_inside_country":wars_inside_country,"imperialism_wars":imperialism_wars,"deimperialism_wars":deimperialism_wars,
+    "battles_in_country":battles_in_country, "label" : label}
+
     total_X = pd.DataFrame(dict)
-    total_X.info()
     total_X = total_X[total_X["location_coast_length"] != -1]
     total_X.info()
-    total_X.to_csv("ML-data/X_total.csv")
-    return total_X
+    total_X.to_csv("ML-data/X_total_EXP.csv")
+    #return total_X
 
 #stage 4.b Cleaning the dataset
 def clean_X(X_total):
@@ -543,13 +609,19 @@ def clean_X(X_total):
         X_total[column] = X_total[column] /X_total[column].abs().max()
     del X_total["Unnamed: 0"]
     X_total = X_total.drop_duplicates()
-    print(X_total.label.value_counts())
+    #Number of wars winning and lossing:
     label1_indexes = X_total[X_total["label"] == 1].index.tolist()
-    print("hi")
-    print(len(label1_indexes))
-    random_rows = random.sample(label1_indexes, 688)
-    X_total = X_total.drop(random_rows, axis=0)
-    print(X_total.label.value_counts())
+    label0_indexes = X_total[X_total["label"] == 0].index.tolist()
+    #random_rows = random.sample(label1_indexes, len(label1_indexes)-len(label0_indexes))
+    #X_total = X_total.drop(random_rows, axis=0)
+
+    X_total["battles_in_country"] = X_total.battles_in_country.replace("0 = []", "0")
+    X_total["battles_in_country"] = pd.to_numeric(X_total["battles_in_country"])
+    
+    X_total["start_year"] = pd.to_numeric(X_total["start_year"], errors="coerce")
+    X_total["finish_year"] = pd.to_numeric(X_total["start_year"], errors="coerce")
+
+    X_total.dropna(inplace=True)
     return X_total
 
 #stage 4.c Logistic Regression
@@ -675,12 +747,25 @@ df = pd.read_csv("DataFrames.csv")
 #df.to_csv('DataFrame.csv')
 #plt.show()
 #X_total = build_X_total(country_df)
-X_total = pd.read_csv("ML-data/X_total.csv")
+#X_total = pd.read_csv("ML-data/X_total.csv")
 #print(df.terror.value_counts())
 fet_cols = ["coast_length","border_length","sea_level","number_of_borders","avg_temp", "location_coast_length","location_border_length","location_sea_level","location_number_of_borders","location_avg_temp"]
-X_total = clean_X(X_total)
+#X_total = clean_X(X_total)
 
-print(country_df.info())
+#print(country_df.info())
 #deep_learning(X_total,fet_cols,12)
-#logistic_regression(X_total,fet_cols)
 
+
+
+#combine = combine[["war_name", "winner_list","losser_list","location", "start_year","finish_year",]]
+#combine.dropna(inplace=True)
+#combine.info()
+#X = pd.read_csv("ML-data/X.csv")
+#build_X_total(country_df,X)
+# X_total_EXP = pd.read_csv("ML-data/X_total_EXP.csv")
+# X_total_EXP = clean_X(X_total_EXP)
+# X_total_EXP.info()
+# sub_question2 = ["name"]
+# X_total_EXP.name = X_total_EXP.name.astype("category").cat.codes
+# X_total_EXP.info()
+# deep_learning(X_total_EXP,X_total_EXP.columns,20)

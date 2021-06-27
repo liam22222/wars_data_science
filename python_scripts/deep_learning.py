@@ -37,3 +37,4 @@ def deep_learning(df, feature_cols, layer_one_nodes):
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
+    
